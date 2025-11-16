@@ -1,4 +1,6 @@
-use crate::api::start;
+use burn::prelude::*;
+
+use crate::api::neural_network::ModelConfig;
 
 #[derive(clap::ValueEnum, Clone, Default)]
 pub(crate) enum FlagBackend {
@@ -24,7 +26,21 @@ pub(crate) struct Arguments {
 
 pub(crate) fn run(args: &Arguments) -> crate::Result<()> {
     match args.backend {
-        FlagBackend::Ndarray => start::ndarray::run(),
-        FlagBackend::Cuda => start::cuda::run(),
+        FlagBackend::Ndarray => train::<burn::backend::NdArray>(),
+        FlagBackend::Cuda => train::<burn::backend::Cuda>(),
     }
 }
+
+fn train<B>() -> crate::Result<()>
+where
+    B: Backend,
+{
+    let device = Default::default();
+    let model = ModelConfig::new(10, 512).init::<B>(&device);
+
+    println!("{model}");
+
+    Ok(())
+}
+
+struct MnistBatcher {}

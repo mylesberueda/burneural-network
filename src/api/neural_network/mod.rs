@@ -1,6 +1,3 @@
-pub(crate) mod cuda;
-pub(crate) mod ndarray;
-
 use burn::{
     nn::{
         Dropout, DropoutConfig, Linear, LinearConfig, Relu,
@@ -12,13 +9,41 @@ use burn::{
 
 #[derive(Debug, Module)]
 pub(crate) struct Model<B: Backend> {
+    // Convolutional layers - input image, extract features
     conv1: Conv2d<B>,
     conv2: Conv2d<B>,
+    // Resize image into chunks (shown as 8 x 8 chunks in `init` below)
     pool: AdaptiveAvgPool2d,
+    // Randomly zeroes neurons during training to prevent overfitting
     dropout: Dropout,
+    // Connected layers - input features, output logits
     linear1: Linear<B>,
     linear2: Linear<B>,
+    // Activation fn
     activation: Relu,
+}
+
+impl<B> Model<B>
+where
+    B: Backend,
+{
+    pub(crate) fn forward(&self, images: Tensor<B, 3>) -> Tensor<B, 2> {
+        let [batch_size, height, width] = images.dims();
+        let x = images.reshape([batch_size, 1, height, width]);
+        let x = self.conv1.forward(x);
+        let x = self.dropout.forward(x);
+        let x = self.conv2.forward(x);
+        let x = self.dropout.forward(x);
+        let x = self.activation.forward(x);
+
+        let x = self.pool.forward(x);
+        let x = x.reshape([batch_size, 16 * 8 * 8]);
+        let x = self.linear1.forward(x);
+        let x = self.dropout.forward(x);
+        let x = self.activation.forward(x);
+
+        self.linear2.forward(x)
+    }
 }
 
 #[derive(Debug, Config)]

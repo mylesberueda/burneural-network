@@ -29,7 +29,7 @@ enum Commands {
     /// Basic command that does things and stuff
     Basic,
     /// Start the neural network
-    Start(start::Arguments),
+    Train(train::Arguments),
     /// Example command with a subcommand
     Example(example::Arguments),
     #[cfg(debug_assertions)]
@@ -46,7 +46,7 @@ fn main() -> crate::Result<()> {
     if let Some(cmds) = &cli.command {
         match cmds {
             Commands::Basic => basic_command(),
-            Commands::Start(args) => start::run(args),
+            Commands::Train(args) => train::run(args),
             Commands::Example(args) => example::run(args),
             #[cfg(debug_assertions)]
             Commands::Scaffold(args) => scaffold::run(args),
