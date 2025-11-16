@@ -17,6 +17,7 @@ Cargo.lock
 # Vectorcode + Chroma
 chroma.log
 chroma_data
+.research/
 
 # OS-specific files
 # ------------------------------------------------------------------------------

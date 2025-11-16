@@ -2,6 +2,7 @@
  * This is the main driver code for the starter.
  * Run with `cargo run` or `<project_name>` to see the auto-generated help text.
  */
+mod api;
 mod commands;
 use clap::Parser as _;
 use commands::*;
@@ -9,10 +10,8 @@ use commands::*;
 type Result<T> = color_eyre::Result<T>;
 
 #[derive(clap::Parser)]
-#[clap(name = "Rust CLI Starter")]
-#[clap(author = "Myles <myles@themapletree.io>")]
-#[clap(version = "0.1.0")]
-#[clap(about = "A simple rust CLI starter with a scaffolding tool")]
+#[clap(name = "Burneural Network")]
+#[command(version, author, about)]
 struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,
@@ -29,6 +28,9 @@ convenience during development.";
 enum Commands {
     /// Basic command that does things and stuff
     Basic,
+    /// Start the neural network
+    Start(start::Arguments),
+    /// Example command with a subcommand
     Example(example::Arguments),
     #[cfg(debug_assertions)]
     #[clap(arg_required_else_help = true)]
@@ -44,6 +46,7 @@ fn main() -> crate::Result<()> {
     if let Some(cmds) = &cli.command {
         match cmds {
             Commands::Basic => basic_command(),
+            Commands::Start(args) => start::run(args),
             Commands::Example(args) => example::run(args),
             #[cfg(debug_assertions)]
             Commands::Scaffold(args) => scaffold::run(args),
