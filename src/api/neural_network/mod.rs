@@ -1,11 +1,16 @@
 use burn::{
     nn::{
-        Dropout, DropoutConfig, Linear, LinearConfig, Relu,
-        conv::{Conv2d, Conv2dConfig},
-        pool::{AdaptiveAvgPool2d, AdaptiveAvgPool2dConfig},
+        Dropout, Linear, Relu, conv::Conv2d, loss::CrossEntropyLossConfig, pool::AdaptiveAvgPool2d,
     },
     prelude::*,
+    train::ClassificationOutput,
 };
+
+mod batch;
+mod config;
+
+pub(crate) use batch::MnistBatcher;
+pub(crate) use config::ModelConfig;
 
 #[derive(Debug, Module)]
 pub(crate) struct Model<B: Backend> {
@@ -27,7 +32,20 @@ impl<B> Model<B>
 where
     B: Backend,
 {
-    pub(crate) fn forward(&self, images: Tensor<B, 3>) -> Tensor<B, 2> {
+    pub(crate) fn forward_classification(
+        &self,
+        images: Tensor<B, 3>,
+        targets: Tensor<B, 1, Int>,
+    ) -> ClassificationOutput<B> {
+        let output = self.forward(images);
+        let loss = CrossEntropyLossConfig::new()
+            .init(&output.device())
+            .forward(output.clone(), targets.clone());
+
+        ClassificationOutput::new(loss, output, targets)
+    }
+
+    fn forward(&self, images: Tensor<B, 3>) -> Tensor<B, 2> {
         let [batch_size, height, width] = images.dims();
         let x = images.reshape([batch_size, 1, height, width]);
         let x = self.conv1.forward(x);
@@ -43,27 +61,5 @@ where
         let x = self.activation.forward(x);
 
         self.linear2.forward(x)
-    }
-}
-
-#[derive(Debug, Config)]
-pub(crate) struct ModelConfig {
-    num_classes: usize,
-    hidden_size: usize,
-    #[config(default = "0.5")]
-    dropout: f64,
-}
-
-impl ModelConfig {
-    pub(crate) fn init<B: Backend>(&self, device: &B::Device) -> Model<B> {
-        Model {
-            conv1: Conv2dConfig::new([1, 8], [3, 3]).init(device), // 1 input channel
-            conv2: Conv2dConfig::new([8, 16], [3, 3]).init(device),
-            pool: AdaptiveAvgPool2dConfig::new([8, 8]).init(),
-            activation: Relu::new(),
-            linear1: LinearConfig::new(16 * 8 * 8, self.hidden_size).init(device),
-            linear2: LinearConfig::new(self.hidden_size, self.num_classes).init(device),
-            dropout: DropoutConfig::new(self.dropout).init(),
-        }
     }
 }

@@ -18,6 +18,8 @@ Cargo.lock
 chroma.log
 chroma_data
 .research/
+# Default output dir for training
+output/
 
 # OS-specific files
 # ------------------------------------------------------------------------------
