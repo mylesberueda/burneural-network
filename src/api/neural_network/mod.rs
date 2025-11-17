@@ -9,7 +9,7 @@ use burn::{
 mod batch;
 mod config;
 
-pub(crate) use batch::MnistBatcher;
+pub(crate) use batch::{MnistBatch, MnistBatcher};
 pub(crate) use config::ModelConfig;
 
 #[derive(Debug, Module)]
@@ -45,7 +45,7 @@ where
         ClassificationOutput::new(loss, output, targets)
     }
 
-    fn forward(&self, images: Tensor<B, 3>) -> Tensor<B, 2> {
+    pub(crate) fn forward(&self, images: Tensor<B, 3>) -> Tensor<B, 2> {
         let [batch_size, height, width] = images.dims();
         let x = images.reshape([batch_size, 1, height, width]);
         let x = self.conv1.forward(x);

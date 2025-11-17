@@ -1,9 +1,8 @@
-use crate::api::neural_network::{MnistBatcher, ModelConfig};
-use bon::Builder;
+use super::*;
+use crate::api::neural_network::MnistBatcher;
 use burn::{
     backend::Autodiff,
     data::{dataloader::DataLoaderBuilder, dataset::vision::MnistDataset},
-    optim::AdamConfig,
     prelude::*,
     record::CompactRecorder,
     tensor::backend::AutodiffBackend,
@@ -12,23 +11,6 @@ use burn::{
         metric::{AccuracyMetric, LossMetric},
     },
 };
-use serde::{Deserialize, Serialize};
-
-#[derive(clap::ValueEnum, Clone, Default)]
-pub(crate) enum FlagBackend {
-    #[default]
-    Ndarray,
-    Cuda,
-}
-
-impl std::fmt::Display for FlagBackend {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            FlagBackend::Ndarray => f.write_str("ndarray"),
-            FlagBackend::Cuda => f.write_str("cuda"),
-        }
-    }
-}
 
 #[derive(clap::Args)]
 pub(crate) struct Arguments {
@@ -56,43 +38,12 @@ pub(crate) fn run(args: &Arguments) -> crate::Result<()> {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Builder)]
-pub(crate) struct TrainingConfig {
-    #[builder(default = ModelConfig::new(10, 512))]
-    model: ModelConfig,
-    #[builder(default = AdamConfig::new())]
-    optimizer: AdamConfig,
-    #[builder(default = 10)]
-    num_epochs: usize,
-    #[builder(default = 64)]
-    batch_size: usize,
-    #[builder(default = 4)]
-    num_workers: usize,
-    #[builder(default = 42)]
-    seed: u64,
-    #[builder(default = 1.0e-4)]
-    learning_rate: f64,
-    #[builder(default = "./output".into())]
-    output_dir: String,
-}
-
-impl TrainingConfig {
-    fn try_from_path(path: std::path::PathBuf) -> crate::Result<Self> {
-        let contents = std::fs::read_to_string(&path)?;
-        toml::from_str(&contents)
-            .map_err(|e| color_eyre::eyre::eyre!("Failed to parse config: {e}"))
-    }
-}
-
 fn train<B>(config: TrainingConfig, device: B::Device) -> crate::Result<()>
 where
     B: AutodiffBackend,
 {
     std::fs::create_dir_all(&config.output_dir)?;
-    std::fs::write(
-        format!("{}/model_config.json", config.output_dir),
-        serde_json::to_string_pretty(&config.model)?,
-    )?;
+    config.save(&format!("{}/model_config.json", config.output_dir))?;
 
     B::seed(&device, config.seed);
 

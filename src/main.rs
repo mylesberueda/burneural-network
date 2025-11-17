@@ -30,6 +30,8 @@ enum Commands {
     Basic,
     /// Start the neural network
     Train(train::Arguments),
+    /// Infer a number from an image
+    Predict(predict::Arguments),
     /// Example command with a subcommand
     Example(example::Arguments),
     #[cfg(debug_assertions)]
@@ -47,6 +49,7 @@ fn main() -> crate::Result<()> {
         match cmds {
             Commands::Basic => basic_command(),
             Commands::Train(args) => train::run(args),
+            Commands::Predict(args) => predict::run(args),
             Commands::Example(args) => example::run(args),
             #[cfg(debug_assertions)]
             Commands::Scaffold(args) => scaffold::run(args),

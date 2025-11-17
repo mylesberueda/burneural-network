@@ -14,8 +14,8 @@ pub(crate) struct MnistBatch<B>
 where
     B: Backend,
 {
-    images: Tensor<B, 3>,
-    targets: Tensor<B, 1, Int>,
+    pub(crate) images: Tensor<B, 3>,
+    pub(crate) targets: Tensor<B, 1, Int>,
 }
 
 const MEAN: f64 = 0.1307;
