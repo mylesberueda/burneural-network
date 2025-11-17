@@ -18,4 +18,4 @@ features = ["derive"]
 
 [dependencies.burn]
 version = "0.19.1"
-features = ["std", "tui", "train", "cuda", "ndarray", "fusion"]
+features = ["std", "tui", "train", "cuda", "ndarray", "vision", "fusion"]
